@@ -1,8 +1,7 @@
 plugins {
-    // 26.1+ uses the "next" Loom line for the unobfuscated toolchain -
-    // no more "net.fabricmc.fabric-loom" pre-26.1 style with a mappings
-    // block. CHECK the current recommended version at fabricmc.net/develop.
-    id 'net.fabricmc.fabric-loom' version '1.11-SNAPSHOT'
+    // Fabric's own migration notes for 26.3 recommend Loom 1.17 with
+    // Gradle 9.6.0 - see https://fabricmc.net/2026/09/15/263.html
+    id 'net.fabricmc.fabric-loom' version '1.17'
     id 'maven-publish'
 }
 
