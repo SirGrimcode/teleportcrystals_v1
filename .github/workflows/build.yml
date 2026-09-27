@@ -18,11 +18,14 @@ jobs:
           java-version: '25'
 
       # This project doesn't ship a Gradle wrapper, so this step provisions
-      # Gradle itself directly on the runner.
+      # Gradle itself directly on the runner. Must be 9.1.0+ - that's the
+      # first Gradle release with full Java 25 support (Minecraft 26.x
+      # requires Java 25), so anything older fails with "Unsupported class
+      # file major version 69" when it tries to run on a JDK 25 toolchain.
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: 8.12
+          gradle-version: 9.1.0
 
       - name: Build
         run: gradle build --stacktrace
