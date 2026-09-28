@@ -7,18 +7,4 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
     }
-    resolutionStrategy {
-        eachPlugin {
-            // The net.fabricmc.fabric-loom plugin ID (used for
-            // non-obfuscated Minecraft versions like 26.3, introduced in
-            // Loom 1.14) may not have a Gradle plugin marker published the
-            // same way the older 'fabric-loom' ID does. This maps the
-            // plugin ID straight to the real module on Fabric's Maven,
-            // bypassing marker lookup entirely - the standard workaround
-            // for "Plugin [...] was not found" on Fabric/Forge toolchains.
-            if (requested.id.id == 'net.fabricmc.fabric-loom') {
-                useModule("net.fabricmc:fabric-loom:${requested.version}")
-            }
-        }
-    }
 }

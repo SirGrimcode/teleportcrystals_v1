@@ -15,6 +15,6 @@ public final class DimensionColor {
         } else if (dimension.equals(Level.END)) {
             return "End";
         }
-        return dimension.location().toString();
+        return dimension.identifier().toString();
     }
 }

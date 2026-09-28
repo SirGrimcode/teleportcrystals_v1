@@ -57,22 +57,118 @@ official mappings, not a patch. Notable changes:
   weren't essential to the item working. Happy to add them back once the
   core mod is confirmed running.
 
-## Most likely remaining trouble spots
+## Update: checked against the real 26.3 docs
 
-If this doesn't compile or doesn't work quite right, these are the
-highest-risk guesses, roughly in order of how unsure I am:
+I went back through the 5 uncertain spots below with an actual web search
+against Fabric's live docs/blog/maven javadocs (this project's Minecraft
+26.3 released Sept 15, 2026, after my training cutoff, so I can't just
+recall this - I looked it up):
 
-1. `ServerPlayer#teleportTo(...)`'s exact parameter list/order for
-   cross-dimension teleports (`TeleportCrystalItem`).
-2. `SoundEvents.AMETHYST_BLOCK_CHIME` / `SoundEvents.ENDERMAN_TELEPORT` -
-   exact constant names (cosmetic only if wrong - the item still works,
-   just quietly, easy one-line fix).
-3. The Fabric API package for `CreativeModeTabEvents` (guessed as staying
-   under `net.fabricmc.fabric.api.itemgroup.v1`, just the class renamed).
-4. Whether `data/minecraft/tags/item/enchantable/durability.json` is
-   still the right tag path for Unbreaking/Mending eligibility on 26.3.
-5. The pinned Loom/Loader/Fabric API/Gradle versions in
-   `gradle.properties` / `build.gradle` / `build.yml` - these change
-   fast; check fabricmc.net/develop for exact current numbers.
+1. **`ServerPlayer#teleportTo(...)`** - confirmed correct. The vanilla
+   signature is `teleportTo(ServerLevel, double, double, double,
+   Set<RelativeMovement>, float, float)` returning `boolean`, exactly
+   what `TeleportCrystalItem` calls.
+2. `SoundEvents.AMETHYST_BLOCK_CHIME` / `ENDERMAN_TELEPORT` - left as-is;
+   still unverified, but cosmetic only if wrong.
+3. **Fixed a real bug**: `CreativeModeTabEvents` is not under
+   `net.fabricmc.fabric.api.itemgroup.v1` - it's under
+   `net.fabricmc.fabric.api.creativetab.v1`. `ModItems.java`'s import
+   is now corrected. This one would have failed to compile.
+4. `enchantable/durability` item tag - left as-is; this predates 26.x
+   and nothing in the 26.3 changelog touches it.
+5. **Updated build versions** for 26.3, per fabricmc.net's Sept 2026
+   post: Fabric Loader `0.19.5` (was 0.19.0), Loom `1.17-SNAPSHOT` (was
+   1.11-SNAPSHOT), Gradle `9.6.0` in the CI workflow (was 8.12).
+   `fabric_version` (`0.161.0+26.3`) was already correct.
 
-Paste any build error back and I'll fix the exact line.
+None of 26.3's actual changes (fuel/compost components, brewing recipes,
+block transformers, world-gen registries) touch anything this mod uses,
+so the core logic shouldn't need further changes for this specific
+Minecraft version - just build-tool versions and that one import.
+
+## Round 2: fixes from an actual `:compileJava` failure
+
+The first build attempt did fail, on API changes that are real but
+happened earlier than 26.1-26.3 (further back in the 1.21.x line), so
+they weren't things the 26.3 changelog would mention. Verified each one
+against Fabric's own docs / Mojang's mapping history before applying:
+
+- **`Item#use` no longer returns `InteractionResultHolder<ItemStack>`**
+  - since 1.21.3 it returns `InteractionResult` directly (the stack is
+  mutated in place instead). `TeleportCrystalItem.use` now returns
+  `InteractionResult` and every `InteractionResultHolder.success(stack)` /
+  `.fail(stack)` became plain `InteractionResult.SUCCESS` / `.FAIL`.
+- **`RelativeMovement` was renamed `Relative`** (Mojang mapping rename,
+  around 1.21.3-1.21.4) - `net.minecraft.world.entity.Relative` now,
+  same `Set<Relative>` usage in `teleportTo(...)`.
+- **`ResourceKey#location()` was renamed `identifier()`** (at 1.21.11,
+  alongside the `ResourceLocation`->`Identifier` class rename) - fixed
+  in both `TeleportData` and `DimensionColor`.
+- **`CompoundTag`'s fallback getters aren't overloads of the same name.**
+  `getInt(key)` / `getString(key)` return `Optional<T>`; the
+  fallback-taking version is a differently named method -
+  `getIntOr(key, fallback)`, `getStringOr(key, fallback)` - not a second
+  `getInt(key, fallback)` overload as I'd assumed. Fixed in `TeleportData`.
+- **`ServerPlayer#getServer()` is gone**; get the `MinecraftServer` off
+  the level instead (`level.getServer()`, on the now-confirmed
+  `ServerLevel` after a level instanceof check) rather than off the
+  player.
+
+## Round 3: another real compile error
+
+- **`teleportTo(...)` takes a trailing `boolean` now** (`dismountVehicle`).
+  Added `true` as the 8th argument, so the player dismounts any vehicle
+  before teleporting - reasonable default for a teleport crystal. Pass
+  `false` instead if you'd rather they keep riding through.
+
+Unlike the round-2 fixes, I couldn't independently cross-check this one
+against another source the way I did the others - I applied it because
+it matches the actual compiler error you got, but keep an eye on it.
+
+Paste any further build error back and I'll fix the exact line.
+
+## Round 4: this one was a runtime crash, not a compile error
+
+The jar built and loaded far enough to reach `ModItems`, which is
+progress - Fabric API being installed cleared the earlier "incompatible
+mods" screen. The crash was:
+
+```
+NullPointerException: Item id not set
+	at Item$Properties.itemIdOrThrow
+	at Item$Properties.effectiveDescriptionId
+	at Item.<init>
+```
+
+**Cause:** an `Item`'s registry id now has to be set on its `Properties`
+*before* the item is constructed - the constructor reads it immediately.
+The old code built the `TeleportStoneItem`/`TeleportWandItem` instances
+first and only figured out their id afterward, in `register(...)`, which
+is too late.
+
+**Fix**, confirmed against Fabric's own current docs (which show this
+exact pattern): `ModItems.register` now takes a factory function instead
+of an already-built item. It creates the `ResourceKey<Item>` first, calls
+`.setId(key)` on a fresh `Item.Properties`, *then* hands that to the
+factory to actually construct the item, then registers it under the same
+key.
+
+Paste any further build/crash log back and I'll fix the exact line.
+
+## Round 5: Loom "No matching variant" build failure
+
+An outside diagnosis said to drop Java 25 to Java 21. That is wrong:
+Fabric's own porting docs say to set Java compatibility to 25 for 26.x,
+and the game itself runs on Java 25. Keep Java 25.
+
+The real cause was a change to the build setup: Loom was set to `'1.+'`
+plus a `useModule(...)` hack in `settings.gradle`. That makes Gradle
+resolve Loom as an ordinary library instead of a plugin, and then no
+variant matches. Reverted to the plain setup Fabric's example mod uses:
+`id 'net.fabricmc.fabric-loom' version '1.17-SNAPSHOT'`, and
+`settings.gradle` back to just the Fabric maven repo. That combination
+got past plugin resolution and into `compileJava` earlier.
+
+Also merged in: the recipe files now use plain-string ingredients
+(`"A": "minecraft:amethyst_shard"`), the format 1.21.2+ expects.
+Loader version is back to 0.19.5.

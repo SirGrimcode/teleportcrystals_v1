@@ -1,12 +1,9 @@
 plugins {
-    // Fabric recommended Loom 1.17 for 26.3 in their release notes, but
-    // that lagged the actual latest published Maven artifact (1.18.2 at
-    // time of writing) - and this number will keep moving. Using "1.+"
-    // instead of a pinned number so it always resolves to the latest 1.x
-    // release automatically, via the resolutionStrategy in settings.gradle
-    // that routes this straight to the real net.fabricmc:fabric-loom
-    // module rather than through marker-artifact lookup.
-    id 'net.fabricmc.fabric-loom' version '1.+'
+    // Pinned to the Loom version Fabric recommends for 26.3 (fabricmc.net/2026/09/15/263.html).
+    // Don't use '1.+' and don't add a useModule() workaround in settings.gradle:
+    // that makes Gradle treat Loom as a plain library and fails with
+    // "No matching variant of net.fabricmc:fabric-loom ...".
+    id 'net.fabricmc.fabric-loom' version '1.17-SNAPSHOT'
     id 'maven-publish'
 }
 

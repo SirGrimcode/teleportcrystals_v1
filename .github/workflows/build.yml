@@ -18,9 +18,7 @@ jobs:
           java-version: '25'
 
       # This project doesn't ship a Gradle wrapper, so this step provisions
-      # Gradle itself directly on the runner. Fabric's own migration notes
-      # for 26.3 specify Gradle 9.6.0 with Loom 1.17 -
-      # see https://fabricmc.net/2026/09/15/263.html
+      # Gradle itself directly on the runner.
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:

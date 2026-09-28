@@ -32,7 +32,7 @@ public final class TeleportData {
         nbt.putInt(KEY_X, pos.getX());
         nbt.putInt(KEY_Y, pos.getY());
         nbt.putInt(KEY_Z, pos.getZ());
-        nbt.putString(KEY_DIM, dimension.location().toString());
+        nbt.putString(KEY_DIM, dimension.identifier().toString());
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(nbt));
 
         stack.set(DataComponents.CUSTOM_MODEL_DATA,
@@ -71,14 +71,16 @@ public final class TeleportData {
             return null;
         }
 
-        // Since 1.21.5, CompoundTag getters return Optional<T> unless you
-        // pass a fallback value, in which case they return the plain type.
+        // Since 1.21.5, CompoundTag's no-arg-fallback getters (getInt(key),
+        // getString(key), etc) return Optional<T>. The fallback-taking
+        // overload is a differently-named method - getIntOr(key, fallback) -
+        // not a getInt(key, fallback) overload.
         BlockPos pos = new BlockPos(
-                nbt.getInt(KEY_X, 0),
-                nbt.getInt(KEY_Y, 0),
-                nbt.getInt(KEY_Z, 0));
+                nbt.getIntOr(KEY_X, 0),
+                nbt.getIntOr(KEY_Y, 0),
+                nbt.getIntOr(KEY_Z, 0));
 
-        Identifier dimId = Identifier.tryParse(nbt.getString(KEY_DIM, ""));
+        Identifier dimId = Identifier.tryParse(nbt.getStringOr(KEY_DIM, ""));
         if (dimId == null) {
             return null;
         }

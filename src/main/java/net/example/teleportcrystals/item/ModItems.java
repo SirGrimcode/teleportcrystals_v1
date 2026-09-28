@@ -1,12 +1,16 @@
 package net.example.teleportcrystals.item;
 
 import net.example.teleportcrystals.TeleportCrystalsMod;
-import net.fabricmc.fabric.api.itemgroup.v1.CreativeModeTabEvents;
+import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
+
+import java.util.function.Function;
 
 public final class ModItems {
     private ModItems() {}
@@ -15,16 +19,23 @@ public final class ModItems {
     // component data (the saved location) keeps them from stacking with
     // differently-bound copies automatically.
     public static final Item TELEPORT_STONE = register("teleport_stone",
-            new TeleportStoneItem(new Item.Properties().stacksTo(16)));
+            properties -> new TeleportStoneItem(properties.stacksTo(16)));
 
     // Tool-like: one at a time, has durability, and can take Unbreaking /
     // Mending (see the enchantable/durability item tag).
     public static final Item TELEPORT_WAND = register("teleport_wand",
-            new TeleportWandItem(new Item.Properties().stacksTo(1).durability(96)));
+            properties -> new TeleportWandItem(properties.stacksTo(1).durability(96)));
 
-    private static Item register(String path, Item item) {
-        return Registry.register(BuiltInRegistries.ITEM,
-                Identifier.fromNamespaceAndPath(TeleportCrystalsMod.MOD_ID, path), item);
+    // An item's Properties must have its own registry id set via .setId(...)
+    // *before* the item is constructed - the item's constructor reads it
+    // immediately (for its description id) and throws a NullPointerException
+    // ("Item id not set") if it's missing. So the key has to exist first,
+    // and the item is built from a factory rather than passed in ready-made.
+    private static Item register(String path, Function<Item.Properties, Item> factory) {
+        ResourceKey<Item> key = ResourceKey.create(Registries.ITEM,
+                Identifier.fromNamespaceAndPath(TeleportCrystalsMod.MOD_ID, path));
+        Item item = factory.apply(new Item.Properties().setId(key));
+        return Registry.register(BuiltInRegistries.ITEM, key, item);
     }
 
     public static void init() {
