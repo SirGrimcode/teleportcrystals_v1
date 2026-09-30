@@ -23,7 +23,7 @@ public final class ModItems {
 
     // Tool-like: one at a time, has durability, and can take Unbreaking /
     // Mending (see the enchantable/durability item tag).
-    public static final Item TELEPORT_WAND = register("teleport_wand",
+    public static final Item TELEPORT_CRYSTAL = register("teleport_crystal",
             properties -> new TeleportWandItem(properties.stacksTo(1).durability(24)));
 
     // An item's Properties must have its own registry id set via .setId(...)
@@ -43,7 +43,7 @@ public final class ModItems {
         // the creative "Tools & Utilities" tab.
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(output -> {
             output.accept(TELEPORT_STONE);
-            output.accept(TELEPORT_WAND);
+            output.accept(TELEPORT_CRYSTAL);
         });
     }
 }

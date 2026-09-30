@@ -186,3 +186,35 @@ It built and runs. Two tweaks:
   `teleport_crystal` (matters if you want the item's file names /
   `/give` command to match too), say so and I'll rename the id and every
   file/reference that points at it, not just the label.
+
+## Round 7: full rename, teleport_wand -> teleport_crystal
+
+Went ahead with the full rename everywhere:
+
+- Item id: `teleportcrystals:teleport_wand` -> `teleportcrystals:teleport_crystal`
+  (`ModItems.java`, both the field `TELEPORT_WAND` -> `TELEPORT_CRYSTAL`
+  and the registered path).
+- Item model selector: `items/teleport_wand.json` -> `items/teleport_crystal.json`.
+- All 4 models and all 4 textures: `teleport_wand_{clear,end,nether,overworld}`
+  -> `teleport_crystal_{clear,end,nether,overworld}` (models' internal
+  texture references updated too).
+- Recipe file: `recipe/teleport_wand.json` -> `recipe/teleport_crystal.json`,
+  result id updated.
+- `enchantable/durability` tag entry updated to the new id.
+- Lang key: `item.teleportcrystals.teleport_wand` -> `..._crystal` (already
+  renamed last round; unchanged here).
+
+**One thing I deliberately left alone:** the Java class is still named
+`TeleportWandItem`. I can't rename it to `TeleportCrystalItem` - that
+name's already taken by the shared abstract base class both crystals
+extend. It's a compile-time-only name (players never see it, and nothing
+in-game references it), so it doesn't affect consistency of anything the
+player interacts with - `/give`, tooltips, JSON files, and the item id
+are all `teleport_crystal` now. Say the word if you'd rather I rename the
+class anyway (e.g. to `TeleportCrystalWandItem`) purely for source
+tidiness.
+
+Since the item id changed, `/give @s teleportcrystals:teleport_wand` no
+longer works - use `teleportcrystals:teleport_crystal` instead. Any
+existing saved item stacks or backed-up crafting recipes referencing the
+old id are why you're keeping last round's build as a backup.
