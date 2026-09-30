@@ -24,7 +24,7 @@ public final class ModItems {
     // Tool-like: one at a time, has durability, and can take Unbreaking /
     // Mending (see the enchantable/durability item tag).
     public static final Item TELEPORT_WAND = register("teleport_wand",
-            properties -> new TeleportWandItem(properties.stacksTo(1).durability(96)));
+            properties -> new TeleportWandItem(properties.stacksTo(1).durability(24)));
 
     // An item's Properties must have its own registry id set via .setId(...)
     // *before* the item is constructed - the item's constructor reads it

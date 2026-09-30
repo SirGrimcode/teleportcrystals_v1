@@ -172,3 +172,17 @@ got past plugin resolution and into `compileJava` earlier.
 Also merged in: the recipe files now use plain-string ingredients
 (`"A": "minecraft:amethyst_shard"`), the format 1.21.2+ expects.
 Loader version is back to 0.19.5.
+
+## Round 6: it's alive - durability + rename
+
+It built and runs. Two tweaks:
+
+- **Wand durability 96 -> 24.** `hurtAndBreak(1, ...)` costs 1 point per
+  teleport, so 24 durability = 24 uses before it breaks.
+- **Display name "Teleport Wand" -> "Teleport Crystal"**, in
+  `en_us.json` only. The internal id (`teleportcrystals:teleport_wand`)
+  is unchanged - same item id, recipe file, model/texture file names -
+  so nothing else needed to move. If you'd rather the id itself say
+  `teleport_crystal` (matters if you want the item's file names /
+  `/give` command to match too), say so and I'll rename the id and every
+  file/reference that points at it, not just the label.
